@@ -1,0 +1,21 @@
+{
+  "name": "tlog",
+  "version": "0.1.0",
+  "description": "Simple Node.js logging with extra features",
+  "main": "index.js",
+  "repository": {
+    "url": "git@github.com:hakovala/node-tlog.git"
+  },
+  "keywords": [
+    "log",
+    "debug"
+  ],
+  "author": {
+    "name": "Harri Kovalainen",
+    "email": "hakovala@gmail.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "printf": "^0.2.0"
+  }
+}
