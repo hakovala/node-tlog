@@ -4,17 +4,17 @@ var util = require('util');
 var printf = require('printf');
 var os = require('os');
 
-nlog.SILENCE = 0;
-nlog.ERROR = 2;
-nlog.WARNING = 5;
-nlog.DEBUG = 10;
+tlog.SILENCE = 0;
+tlog.ERROR = 2;
+tlog.WARNING = 5;
+tlog.DEBUG = 10;
 
-nlog.LEVEL_LENGTH = 5;
-nlog.TAG_LENGTH = 10;
+tlog.LEVEL_LENGTH = 5;
+tlog.TAG_LENGTH = 10;
 
 var Format = {
-	level: "[%(level)" + nlog.LEVEL_LENGTH + "s]",
-	tag: "%(tag)" + nlog.TAG_LENGTH + "s",
+	level: "[%(level)" + tlog.LEVEL_LENGTH + "s]",
+	tag: "%(tag)" + tlog.TAG_LENGTH + "s",
 	msg: "%(msg)s",
 	trace: "(%(filename)s:%(line)d)"
 };
@@ -22,26 +22,26 @@ var Format = {
 var FORMAT_NORMAL = Format.level + ' ' + Format.tag + ': ' + Format.msg;
 var FORMAT_TRACE = FORMAT_NORMAL + ' ' + Format.trace;
 
-nlog.format = FORMAT_NORMAL;
+tlog.format = FORMAT_NORMAL;
 
 var trace = false;
-Object.defineProperty(nlog, 'trace', {
+Object.defineProperty(tlog, 'trace', {
 	get: function() { return trace; },
 	set: function(value) {
 		trace = !!value;
-		nlog.format = (trace ? FORMAT_TRACE : FORMAT_NORMAL) + os.EOL;
+		tlog.format = (trace ? FORMAT_TRACE : FORMAT_NORMAL) + os.EOL;
 	}
 });
 
-nlog.loggers = {};
+tlog.loggers = {};
 var Enabled = [];
 
-nlog.output = process.stdout;
+tlog.output = process.stdout;
 
-function nlog(tag) {
+function tlog(tag) {
 	tag = tag || 'default';
-	if (nlog.loggers[tag])
-		return nlog.loggers[tag];
+	if (tlog.loggers[tag])
+		return tlog.loggers[tag];
 
 	function disabled() {
 		return log;
@@ -54,13 +54,13 @@ function nlog(tag) {
 	log.print = log._print = function(level, msg) {
 		var args = Array.prototype.slice.call(arguments, 2);
 		var values = {
-			tag: log.tag.substring(0, nlog.TAG_LENGTH),
-			level: level.substring(0, nlog.LEVEL_LENGTH),
+			tag: log.tag.substring(0, tlog.TAG_LENGTH),
+			level: level.substring(0, tlog.LEVEL_LENGTH),
 			msg: (args.length > 0 ? printf.apply(null, [msg].concat(args)) : msg),
 			filename: 'hello',
 			line: 123
 		};
-		printf(nlog.output, nlog.format, values);
+		printf(tlog.output, tlog.format, values);
 		return log;
 	};
 	log.d = log._debug = log.print.bind(log, 'DEBUG');
@@ -72,9 +72,9 @@ function nlog(tag) {
 	log._enabled = true;
 
 	function update() {
-		log.d = (log._enabled && log._level >= nlog.DEBUG) ? log._debug : disabled;
-		log.w = (log._enabled && log._level >= nlog.WARNING) ? log._warning : disabled;
-		log.e = (log._enabled && log._level >= nlog.ERROR) ? log._error : disabled;
+		log.d = (log._enabled && log._level >= tlog.DEBUG) ? log._debug : disabled;
+		log.w = (log._enabled && log._level >= tlog.WARNING) ? log._warning : disabled;
+		log.e = (log._enabled && log._level >= tlog.ERROR) ? log._error : disabled;
 	}
 
 	Object.defineProperties(log, {
@@ -98,13 +98,13 @@ function nlog(tag) {
 		}
 	});
 
-	nlog.loggers[tag] = log;
+	tlog.loggers[tag] = log;
 
 	return log;
 }
-module.exports = nlog;
+module.exports = tlog;
 
-nlog.enable = function(regexp) {
+tlog.enable = function(regexp) {
 	var str = (typeof regexp == 'string') ? regexp : regexp.source;
 	for (var i = 0, l = Enabled.length; i < l; i++) {
 		if (Enabled[i].source == str) {
@@ -115,11 +115,11 @@ nlog.enable = function(regexp) {
 	Enabled.push(regexp);
 };
 
-nlog.disable = function(regexp) {
+tlog.disable = function(regexp) {
 
 };
 
-nlog.enabled = function(tag) {
+tlog.enabled = function(tag) {
 
 };
 
