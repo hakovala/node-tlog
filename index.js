@@ -82,11 +82,12 @@ function tlog(tag) {
 	}
 
 	function log(msg) {
-		return log.d(msg);
+		return log.d.apply(log, arguments);
 	}
 
 	log.print = log._print = function(level, msg) {
 		var args = Array.prototype.slice.call(arguments, 2);
+		console.log(arguments);
 
 		var values = {
 			tag: prepend_string(log.tag, tlog.TAG_LENGTH),
