@@ -34,7 +34,7 @@ var Format = {
 var FORMAT_NORMAL = Format.level + ' ' + Format.tag + ': ' + Format.msg;
 var FORMAT_TRACE = FORMAT_NORMAL + ' ' + Format.trace;
 
-tlog.format = FORMAT_NORMAL;
+tlog.format = FORMAT_NORMAL + os.EOL;
 
 var trace = false;
 Object.defineProperty(tlog, 'trace', {
