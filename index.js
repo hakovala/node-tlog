@@ -3,18 +3,28 @@
 var util = require('util');
 var printf = require('printf');
 var os = require('os');
+var colors = require('colors');
 
 tlog.SILENCE = 0;
 tlog.ERROR = 2;
 tlog.WARNING = 5;
 tlog.DEBUG = 10;
 
+tlog.levels = {};
+tlog.levels[tlog.DEBUG]   = {	name: 'debug', color: 'blue' };
+tlog.levels[tlog.WARNING] = {	name: 'warn', color: 'yellow' };
+tlog.levels[tlog.ERROR]   = {	name: 'error', color: 'red' };
+
+var current_color = 0;
+tlog.colors = true;
+tlog.tag_colors = [ 'white', 'green', 'blue', 'cyan', 'gray', 'magenta' ];
+
 tlog.LEVEL_LENGTH = 5;
 tlog.TAG_LENGTH = 10;
 
 var Format = {
-	level: "[%(level)" + tlog.LEVEL_LENGTH + "s]",
-	tag: "%(tag)" + tlog.TAG_LENGTH + "s",
+	level: "[%(level)s]",
+	tag: "%(tag)s",
 	msg: "%(msg)s",
 	trace: "(%(filename)s:%(line)d)"
 };
@@ -38,6 +48,28 @@ var Enabled = [];
 
 tlog.output = process.stdout;
 
+function next_tag_color() {
+	return tlog.tag_colors[current_color++ % tlog.tag_colors.length];
+}
+
+function prepend_string(str, len, c) {
+	c = c || ' ';
+	if (str.length > len)
+		return str.substring(0, len);
+	if (str.length < len)
+		return Array(len - str.length + 1).join(c) + str;
+	return str;
+}
+
+function append_string(str, len, c) {
+	c = c || ' ';
+	if (str.length > len)
+		return str.substring(0, len);
+	if (str.length < len)
+		return str + Array(len - str.length + 1).join(c);
+	return str;
+}
+
 function tlog(tag) {
 	tag = tag || 'default';
 	if (tlog.loggers[tag])
@@ -53,21 +85,31 @@ function tlog(tag) {
 
 	log.print = log._print = function(level, msg) {
 		var args = Array.prototype.slice.call(arguments, 2);
+
 		var values = {
-			tag: log.tag.substring(0, tlog.TAG_LENGTH),
-			level: level.substring(0, tlog.LEVEL_LENGTH),
+			tag: prepend_string(log.tag, tlog.TAG_LENGTH),
+			level: prepend_string(tlog.levels[level].name, tlog.LEVEL_LENGTH),
 			msg: (args.length > 0 ? printf.apply(null, [msg].concat(args)) : msg),
+			// TODO: correct trace
 			filename: 'hello',
 			line: 123
 		};
-		printf(tlog.output, tlog.format, values);
+		var format = tlog.format;
+
+		if (tlog.colors && log.colors) {
+			values.level = values.level[tlog.levels[level].color]
+			values.msg = values.msg[log._color];
+		}
+		printf(tlog.output, format, values);
 		return log;
 	};
-	log.d = log._debug = log.print.bind(log, 'DEBUG');
-	log.w = log._warning = log.print.bind(log, 'WARN');
-	log.e = log._error = log.print.bind(log, 'ERROR');
+	log.d = log._debug = log.print.bind(log, tlog.DEBUG);
+	log.w = log._warning = log.print.bind(log, tlog.WARNING);
+	log.e = log._error = log.print.bind(log, tlog.ERROR);
 
 	log.tag = tag;
+	log.colors = tlog.colors;
+	log._color = next_tag_color();
 	log._level = 0;
 	log._enabled = true;
 
