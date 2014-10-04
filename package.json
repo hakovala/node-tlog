@@ -1,6 +1,6 @@
 {
   "name": "tlog",
-  "version": "0.1.2-1",
+  "version": "0.1.2-2",
   "description": "Simple Node.js logging with extra features",
   "main": "index.js",
   "repository": {
