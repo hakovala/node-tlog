@@ -1,9 +1,11 @@
 "use strict";
 
 var util = require('util');
+var path = require('path');
 var printf = require('printf');
 var os = require('os');
 var colors = require('colors');
+var stackTrace = require('stack-trace');
 
 tlog.SILENCE = 0;
 tlog.ERROR = 2;
@@ -89,11 +91,15 @@ function tlog(tag) {
 		var values = {
 			tag: prepend_string(log.tag, tlog.TAG_LENGTH),
 			level: prepend_string(tlog.levels[level].name, tlog.LEVEL_LENGTH),
-			msg: (args.length > 0 ? printf.apply(null, [msg].concat(args)) : msg),
-			// TODO: correct trace
-			filename: 'hello',
-			line: 123
+			msg: (args.length > 0 ? printf.apply(null, [msg].concat(args)) : msg)
 		};
+		if (tlog.trace || log.trace) {
+			var trace = get_trace();
+			values.filename = path.basename(trace.getFileName());
+			values.method = trace.getMethodName();
+			values.line = trace.getLineNumber();
+		}
+
 		var format = tlog.format;
 
 		if (tlog.colors && log.colors) {
@@ -108,6 +114,7 @@ function tlog(tag) {
 	log.e = log._error = log.print.bind(log, tlog.ERROR);
 
 	log.tag = tag;
+	log.trace = tlog.trace;
 	log.colors = tlog.colors;
 	log._color = next_tag_color();
 	log._level = 0;
@@ -164,4 +171,13 @@ tlog.disable = function(regexp) {
 tlog.enabled = function(tag) {
 
 };
+
+function get_trace() {
+	var trace = stackTrace.get();
+	for (var i = 0, l = trace.length; i < l; i++) {
+		// get first trace outside of this file
+		if (trace[i].getFileName() != __filename)
+			return trace[i];
+	}
+}
 
