@@ -1,183 +1,96 @@
 "use strict";
 
-var util = require('util');
-var path = require('path');
-var printf = require('printf');
-var os = require('os');
-var colors = require('colors');
+var misc = require('./lib/misc');
 var stackTrace = require('stack-trace');
 
-tlog.SILENCE = 0;
-tlog.ERROR = 2;
-tlog.WARNING = 5;
-tlog.DEBUG = 10;
+var ConsoleWriter = require('./lib/writers/console');
 
-tlog.levels = {};
-tlog.levels[tlog.DEBUG]   = {	name: 'debug', color: 'blue' };
-tlog.levels[tlog.WARNING] = {	name: 'warn', color: 'yellow' };
-tlog.levels[tlog.ERROR]   = {	name: 'error', color: 'red' };
-
-var current_color = 0;
-tlog.colors = true;
-tlog.tag_colors = [ 'white', 'green', 'blue', 'cyan', 'gray', 'magenta' ];
-
-tlog.LEVEL_LENGTH = 5;
-tlog.TAG_LENGTH = 10;
-
-var Format = {
-	level: "[%(level)s]",
-	tag: "%(tag)s",
-	msg: "%(msg)s",
-	trace: "(%(filename)s:%(line)d)"
+// Log levels
+var Level = {
+	DEBUG: 10,
+	INFO: 20,
+	WARNING: 30,
+	ERROR: 40,
+	SILENT: 9999,
+	options: {},
 };
 
-var FORMAT_NORMAL = Format.level + ' ' + Format.tag + ': ' + Format.msg;
-var FORMAT_TRACE = FORMAT_NORMAL + ' ' + Format.trace;
+// Log level options
+var default_level = {name: 'unknown'};
+Level.options[Level.DEBUG]   = {name: 'debug'  , color: {text: 'white', background: 'bgBlue'}};
+Level.options[Level.INFO]    = {name: 'info'   , color: {text: 'black', background: 'bgWhite'}};
+Level.options[Level.WARNING] = {name: 'warning', color: {text: 'black', background: 'bgYellow'}};
+Level.options[Level.ERROR]   = {name: 'error'  , color: {text: 'black', background: 'bgRed'}};
 
-tlog.format = FORMAT_NORMAL + os.EOL;
+var loggers = {};
+var writers = [ new ConsoleWriter() ];
 
-var trace = false;
-Object.defineProperty(tlog, 'trace', {
-	get: function() { return trace; },
-	set: function(value) {
-		trace = !!value;
-		tlog.format = (trace ? FORMAT_TRACE : FORMAT_NORMAL) + os.EOL;
-	}
-});
+var global_level = Level.INFO;
 
-tlog.loggers = {};
-var Enabled = [];
+var current_tag_color = 0;
+var tag_colors = ['white', 'green', 'blue', 'cyan', 'gray', 'magenta'];
 
-tlog.output = process.stdout;
-
-function next_tag_color() {
-	return tlog.tag_colors[current_color++ % tlog.tag_colors.length];
+function nextTagColor() {
+	return tag_colors[current_tag_color++ % tag_colors.length];
 }
 
-function prepend_string(str, len, c) {
-	c = c || ' ';
-	if (str.length > len)
-		return str.substring(0, len);
-	if (str.length < len)
-		return Array(len - str.length + 1).join(c) + str;
-	return str;
-}
-
-function append_string(str, len, c) {
-	c = c || ' ';
-	if (str.length > len)
-		return str.substring(0, len);
-	if (str.length < len)
-		return str + Array(len - str.length + 1).join(c);
-	return str;
-}
-
-function tlog(tag) {
-	tag = tag || 'default';
-	if (tlog.loggers[tag])
-		return tlog.loggers[tag];
-
-	function disabled() {
-		return log;
+// Create new Logger with tag
+module.exports = function(tag) {
+	if (!loggers[tag]) {
+		loggers[tag] = new Logger(tag);
 	}
+	return loggers[tag];
+};
 
-	function log(msg) {
-		return log.d.apply(log, arguments);
-	}
+module.exports.loggers = loggers;
+module.exports.writers = writers;
+module.exports.Level = Level;
 
-	log.print = log._print = function(level, msg) {
-		var args = Array.prototype.slice.call(arguments, 2);
+/**
+ * Set global log level
+ * @param {integer} level log level
+ */
+module.exports.setLevel = function(level) {
+	global_level = level;
+};
 
-		var values = {
-			tag: prepend_string(log.tag, tlog.TAG_LENGTH),
-			level: prepend_string(tlog.levels[level].name, tlog.LEVEL_LENGTH),
-			msg: (args.length > 0 ? printf.apply(null, [msg].concat(args)) : msg)
-		};
-		if (tlog.trace || log.trace) {
-			var trace = get_trace();
-			values.filename = path.basename(trace.getFileName());
-			values.method = trace.getMethodName();
-			values.line = trace.getLineNumber();
-		}
+// Logger object
+function Logger(tag, options) {
+	if (!(this instanceof Logger))
+		return new Logger(tag);
 
-		var format = tlog.format;
+	this.tag = tag;
+	this.tag_color = nextTagColor();
+	this.level = Level.DEBUG;
 
-		if (tlog.colors && log.colors) {
-			values.level = values.level[tlog.levels[level].color]
-			values.msg = values.msg[log._color];
-		}
-		printf(tlog.output, format, values);
-		return log;
-	};
-	log.d = log._debug = log.print.bind(log, tlog.DEBUG);
-	log.w = log._warning = log.print.bind(log, tlog.WARNING);
-	log.e = log._error = log.print.bind(log, tlog.ERROR);
+	var last_call;
 
-	log.tag = tag;
-	log.trace = tlog.trace;
-	log.colors = tlog.colors;
-	log._color = next_tag_color();
-	log._level = 0;
-	log._enabled = true;
-
-	function update() {
-		log.d = (log._enabled && log._level >= tlog.DEBUG) ? log._debug : disabled;
-		log.w = (log._enabled && log._level >= tlog.WARNING) ? log._warning : disabled;
-		log.e = (log._enabled && log._level >= tlog.ERROR) ? log._error : disabled;
-	}
-
-	Object.defineProperties(log, {
-		'enabled': {
-			get: function() {
-				return this._enabled;
-			},
-			set: function(value) {
-				this._enabled = value;
-				update();
-			}
-		},
-		'level': {
-			get: function() {
-				return this._level;
-			},
-			set: function(value) {
-				this._level = value;
-				update();
-			}
-		}
-	});
-
-	tlog.loggers[tag] = log;
-
-	return log;
-}
-module.exports = tlog;
-
-tlog.enable = function(regexp) {
-	var str = (typeof regexp == 'string') ? regexp : regexp.source;
-	for (var i = 0, l = Enabled.length; i < l; i++) {
-		if (Enabled[i].source == str) {
-			// already enabled, nothing to do
+	this.log = function(level, msg) {
+		if (level < this.level || level < global_level)
 			return;
+
+		var now = +new Date();
+		var diff = last_call ? now - last_call : 0;
+		last_call = now;
+
+		var log_obj = {
+			time: now,
+			time_diff: diff,
+			tag: {name: this.tag, color: { text: this.tag_color }},
+			level: Level.options[level] || default_level,
+			message: msg,
+			args: Array.prototype.slice.call(arguments, 2),
+			trace: stackTrace.get(this.log).slice(1)
+		};
+
+		for (var i = 0; i < writers.length; i++) {
+			writers[i].write(log_obj);
 		}
-	}
-	Enabled.push(regexp);
-};
+	};
 
-tlog.disable = function(regexp) {
-
-};
-
-tlog.enabled = function(tag) {
-
-};
-
-function get_trace() {
-	var trace = stackTrace.get();
-	for (var i = 0, l = trace.length; i < l; i++) {
-		// get first trace outside of this file
-		if (trace[i].getFileName() != __filename)
-			return trace[i];
-	}
+	this.d = this.log.bind(this, Level.DEBUG);
+	this.i = this.log.bind(this, Level.INFO);
+	this.w = this.log.bind(this, Level.WARNING);
+	this.e = this.log.bind(this, Level.ERROR);
 }
-
+module.exports.Logger = Logger;
