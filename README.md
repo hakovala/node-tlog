@@ -12,75 +12,67 @@ $ npm install tlog
 
  Basic usage of `tlog` is very simple, but it also has some cool features to make developers life easier.
 
+ Planned features include log levels from enviroment variables, other log writers (files).
+
 ### Simple usage
 
  Create default logger instance with 'default' tag name.
 
 ```js
-// create default logger
-var log = require('tlog')();
-
-log('Hello, Debug!');
-log.d('Hello, Debug!');
-log.w('Hello, Warning!');
-log.e('Hello, Error!');
-```
-
- Create logger for multiple components with different tag names.
-
-```js
-// create 'master' logger
-var mlog = require('tlog')('master');
-mlog('Hello from Master!');
-
-// create 'slave' logger
-var slog = require('tlog')('slave');
-slog('Hello from Slave!');
-
-// some other place
-var slog = require('tlog')('slave');
-
-// slog is the same instance as above
-
-```
-
-### Enabling loggers
-
- Logging can be enabled/disabled in a global level or in a logger level.
- Enabling or setting logging level will change logging methods to NOOP methods based on the settings.
-
-```js
 var tlog = require('tlog');
-// only log warning and above
-tlog.level = tlog.WARNING
 
-var log_a = tlog('A');
-// let's silence logs from A
-log_a.enabled = false;
+// create loggers
 
-var log_b = tlog('B');
-// we wan't to debug B, let it be more verbose
-log_b.level = tlog.DEBUG;
+var logA = tlog('logA');
+var logB = tlog('logB');
 
+logB.level = tlog.Level.WARNING; // aka. 30
+
+logA.d('Hello, Debug!');
+logA.i('Hello, Info!');
+logA.w('Hello, Warning!');
+logA.e('Hello, Error!');
+
+tlog.level = tlog
+
+logB.d('Hello, Debug!');
+logB.i('Hello, Info!');
+logB.w('Hello, Warning!');
+logB.e('Hello, Error!');
+
+// silence messages from logA
+logA.level = tlog.Level.SILENT; // aka. 9999
+
+logA.e('This wont log print');
 ```
 
-### Log traces (TODO)
-_Not yet implemented!_
+### Log levels
 
- When log tracing is enabled, the log messages will include filename and line number where the log was made. Helps a lot to find to stray messages.
+ You can use any integer value as a logging level. Here are predefined values.
 
+```
+tlog.Level.DEBUG = 10;
+tlog.Level.INFO = 20;
+tlog.Level.WARNING = 30;
+tlog.Level.ERROR = 40;
+tlog.Level.SILENCE = 9999;
+```
 
-### Configuration (TODO)
-_Not yet implemented!_
+### Log level options
 
- Setting config values for `tlog` can be done with environment values or from config file.
+ `tlog.Level.options` contains the console printing options for each log level.
 
+```
+// create new log level
+var PRE_WARNING = 25;
+tlog.Level.options[PRE_WARNING] = {
+	name: 'pre-warning',
+	color: {
+		text: 'red',
+		background: 'yellow'
+	}
+};
+```
 
-
-## TODO
-
- - Colorful output
- - Configuration from file and environtment variables
- - Other nice things to have
-
-
+## Writers
+ **TODO**
