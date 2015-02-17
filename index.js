@@ -80,7 +80,7 @@ function Logger(tag, options) {
 			level: Level.options[level] || default_level,
 			message: msg,
 			args: Array.prototype.slice.call(arguments, 2),
-			trace: stackTrace.get(this.log).slice(1)
+			trace: stackTrace.get(this.log),
 		};
 
 		for (var i = 0; i < writers.length; i++) {
