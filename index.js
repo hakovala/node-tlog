@@ -86,7 +86,7 @@ function Logger(tag, options) {
 		for (var i = 0; i < writers.length; i++) {
 			writers[i].write(log_obj);
 		}
-	};
+	}.bind(this);
 
 	this.d = this.log.bind(this, Level.DEBUG);
 	this.i = this.log.bind(this, Level.INFO);
