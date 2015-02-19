@@ -94,5 +94,7 @@ function Logger(tag, options) {
 	this.i = this.log.bind(this, Level.INFO);
 	this.w = this.log.bind(this, Level.WARNING);
 	this.e = this.log.bind(this, Level.ERROR);
+
+	this.Level = Level;
 }
 module.exports.Logger = Logger;
