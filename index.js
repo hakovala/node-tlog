@@ -61,12 +61,14 @@ function Logger(tag, options) {
 
 	this.tag = tag;
 	this.tag_color = nextTagColor();
-	this.level = Level.DEBUG;
+	this.level = null;
 
 	var last_call;
 
 	this.log = function(level, msg) {
-		if (level < this.level || level < global_level)
+		if (this.level === null && level < global_level)
+			return;
+		if (level < this.level)
 			return;
 
 		var now = +new Date();
