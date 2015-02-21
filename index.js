@@ -51,8 +51,14 @@ function normalizeLevel(level) {
 	return level;
 }
 
-// normalize configs
 config.level = normalizeLevel(config.level) || Level.INFO;
+if (config.levelOptions) {
+	for (var levelName in config.levelOptions) {
+		var level = normalizeLevel(levelName);
+		// TODO: use extending
+		Level.options[level] = config.levelOptions[levelName];
+	}
+}
 
 // cache loggers
 var loggers = {};
