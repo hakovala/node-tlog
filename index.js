@@ -43,6 +43,7 @@ try {
 	config = {};
 }
 
+// normalize level string to number
 function normalizeLevel(level) {
 	if (typeof level === 'string') {
 		level = Level[level.toUpperCase()];
@@ -62,6 +63,30 @@ var tag_colors = ['white', 'green', 'blue', 'cyan', 'gray', 'magenta'];
 
 function nextTagColor() {
 	return tag_colors[current_tag_color++ % tag_colors.length];
+}
+
+function matchTag(tag) {
+	if (!config.tags)
+		return null;
+
+	var tagList = Object.keys(config.tags);
+	var best = tagList.reduce(function(prev, current, i, arr) {
+		// if current tag is longer and tag starts with it,
+		// then it's a better match
+		if (tag.indexOf(current) === 0) {
+			if (!prev || prev.length <= current.length) {
+				prev = current;
+			}
+		}
+		return prev;
+	}, undefined);
+
+	return best;
+}
+
+function getTagLevel(tag) {
+	var best = matchTag(tag);
+	return best ? normalizeLevel(config.tags[best].level) : null;
 }
 
 // Create new Logger with tag
@@ -91,7 +116,7 @@ function Logger(tag, options) {
 
 	this.tag = tag;
 	this.tag_color = nextTagColor();
-	this.level = null;
+	this.level = getTagLevel(tag);
 
 	var last_call;
 
