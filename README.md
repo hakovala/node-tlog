@@ -1,6 +1,8 @@
 # tlog
 
- Simple logger with some extra features to help your life.
+ tlog tries to provide a simple logging system with extensive tag system.
+ Tags are used for filtering log output. tlog uses hierarchical tags
+ to group multiple tags in one.
 
 ## Install
 
@@ -9,14 +11,6 @@ $ npm install tlog
 ```
 
 ## Usage
-
- Basic usage of `tlog` is very simple, but it also has some cool features to make developers life easier.
-
- Planned features include log levels from enviroment variables, other log writers (files).
-
-### Simple usage
-
- Create default logger instance with 'default' tag name.
 
 ```js
 var tlog = require('tlog');
@@ -43,7 +37,36 @@ logB.e('Hello, Error!');
 // silence messages from logA
 logA.level = tlog.Level.SILENT; // aka. 9999
 
-logA.e('This wont log print');
+logA.e('This wont log');
+```
+
+### Configs
+
+ To use per application configs, put `tlog.json` in application path.
+ Config file is searched from all applications parent folders.
+
+ Last best matching tag from config is used. This enables to set configs for
+ a set of tags at once.
+
+ Log levels can have the name or the actual numeric value.
+
+#### Example config:
+
+```js
+{
+	"level": "warning", // global log level
+	"tags": { // per tag configs
+		"log": { // matches everything starting with 'log'
+			"level": "debug"
+		},
+		"logB": { // matches everything starting with 'logB'
+			"level": 10
+		}
+		"logC": {
+			"level": null // use global level
+		}
+	}
+}
 ```
 
 ### Log levels
@@ -74,5 +97,5 @@ tlog.Level.options[PRE_WARNING] = {
 };
 ```
 
-## Writers
- **TODO**
+## Writers and formatters
+ **not yet implemented/designed fully**
