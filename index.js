@@ -57,8 +57,6 @@ config.level = normalizeLevel(config.level) || Level.INFO;
 var loggers = {};
 var writers = [ new ConsoleWriter() ];
 
-var global_level = Level.INFO;
-
 var current_tag_color = 0;
 var tag_colors = ['white', 'green', 'blue', 'cyan', 'gray', 'magenta'];
 
@@ -83,7 +81,7 @@ module.exports.Level = Level;
  * @param {integer} level log level
  */
 module.exports.setLevel = function(level) {
-	global_level = level;
+	config.level = level;
 };
 
 // Logger object
@@ -98,7 +96,7 @@ function Logger(tag, options) {
 	var last_call;
 
 	this.log = function(level, msg) {
-		if (this.level === null && level < global_level)
+		if (this.level === null && level < config.level)
 			return;
 		if (level < this.level)
 			return;
