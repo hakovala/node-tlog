@@ -156,11 +156,13 @@ function Logger(tag, options) {
 	this.w = this.log.bind(this, Level.WARNING);
 	this.e = this.log.bind(this, Level.ERROR);
 
-	this.spy = function(event_emitter) {
+	this.spy = function(event_emitter, filter) {
 		var self = this;
 		event_emitter._emit = event_emitter.emit;
 		event_emitter.emit = function(event) {
-			self.d('event:', event);
+			if (!filter || filter.indexOf(event) !== -1) {
+				self.d('event:', event);
+			}
 			event_emitter._emit.apply(event_emitter, arguments);
 		};
 	};
