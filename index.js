@@ -1,5 +1,7 @@
 "use strict";
 
+var fs = require('fs');
+var path = require('path');
 var misc = require('./lib/misc');
 var stackTrace = require('stack-trace');
 
@@ -22,6 +24,36 @@ Level.options[Level.INFO]    = {name: 'info'   , color: {text: 'black', backgrou
 Level.options[Level.WARNING] = {name: 'warning', color: {text: 'black', background: 'bgYellow'}};
 Level.options[Level.ERROR]   = {name: 'error'  , color: {text: 'black', background: 'bgRed'}};
 
+// Read configs from file
+var config_dir = module.parent.filename;
+var config_file;
+// search config file from parent directories
+while ((config_dir = path.dirname(config_dir)) && config_dir !== '/') {
+	var filepath = config_dir + '/tlog.json';
+	if (fs.existsSync(filepath)) {
+		config_file = filepath;
+		break;
+	}
+}
+
+var config;
+try {
+	config = JSON.parse(fs.readFileSync(config_file));
+} catch (e) {
+	config = {};
+}
+
+function normalizeLevel(level) {
+	if (typeof level === 'string') {
+		level = Level[level.toUpperCase()];
+	}
+	return level;
+}
+
+// normalize configs
+config.level = normalizeLevel(config.level) || Level.INFO;
+
+// cache loggers
 var loggers = {};
 var writers = [ new ConsoleWriter() ];
 
