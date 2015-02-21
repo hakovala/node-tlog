@@ -95,6 +95,21 @@ function Logger(tag, options) {
 	this.w = this.log.bind(this, Level.WARNING);
 	this.e = this.log.bind(this, Level.ERROR);
 
+	this.spy = function(event_emitter) {
+		var self = this;
+		event_emitter._emit = event_emitter.emit;
+		event_emitter.emit = function(event) {
+			self.d('event:', event);
+			event_emitter._emit.apply(event_emitter, arguments);
+		};
+	};
+	this.removeSpy = function(event_emitter) {
+		if (event_emitter._emit) {
+			event_emitter.emit = event_emitter._emit;
+			event_emitter._emit = undefined;
+		}
+	};
+
 	this.Level = Level;
 }
 module.exports.Logger = Logger;
