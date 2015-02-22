@@ -156,12 +156,21 @@ function Logger(tag, options) {
 	this.w = this.log.bind(this, Level.WARNING);
 	this.e = this.log.bind(this, Level.ERROR);
 
-	this.spy = function(name, event_emitter, filter) {
+	function someStartWith(arr, str) {
+		return arr.some(function(item) {
+			return str.indexOf(item) === 0;
+		});
+	}
+
+	this.spy = function(name, event_emitter, include, exclude) {
 		var self = this;
 		event_emitter._emit = event_emitter.emit;
 		event_emitter.emit = function(event) {
-			if (!filter || filter.indexOf(event) !== -1) {
-				self.d(name + ':', event);
+			// if filter set or event name start does not match any of the filters
+			if (!include || someStartWith(include, event)) {
+				if (!exclude || !someStartWith(exclude, event)) {
+					self.d(name + ':', event);
+				}
 			}
 			event_emitter._emit.apply(event_emitter, arguments);
 		};
