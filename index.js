@@ -19,10 +19,10 @@ var Level = {
 
 // Log level options
 var default_level = {name: 'unknown'};
-Level.options[Level.DEBUG]   = {name: 'debug'  , color: {text: 'white', background: 'bgBlue'}};
-Level.options[Level.INFO]    = {name: 'info'   , color: {text: 'black', background: 'bgWhite'}};
-Level.options[Level.WARNING] = {name: 'warning', color: {text: 'black', background: 'bgYellow'}};
-Level.options[Level.ERROR]   = {name: 'error'  , color: {text: 'black', background: 'bgRed'}};
+Level.options[Level.DEBUG]   = {name: 'debug'  , color: {text: 'white', background: 'blue'}};
+Level.options[Level.INFO]    = {name: 'info'   , color: {text: 'black', background: 'white'}};
+Level.options[Level.WARNING] = {name: 'warning', color: {text: 'black', background: 'yellow'}};
+Level.options[Level.ERROR]   = {name: 'error'  , color: {text: 'black', background: 'red'}};
 
 // Read configs from file
 var config_dir = module.parent.filename;
